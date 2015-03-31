@@ -31,7 +31,7 @@
 		#define NO_AUTO
 		#undef DEBUG
 		#define TINY_DEBUG
-		#define DEFAULT_CE_PIN 5
+		#define DEFAULT_CE_PIN 0
 		#define DEFAULT_CS_PIN 3
 	#endif
 #endif
