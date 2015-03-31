@@ -14,10 +14,27 @@
 #define DEFAULT_CE_PIN 9
 #define DEFAULT_CS_PIN 10
 
-
 /***
  * Enable/Disable debug logging
  */
 #define DEBUG
+
+/***
+ * attiny support
+ */
+
+#if defined (ARDUINO) && !defined (__arm__)
+	#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
+		#define TINY
+		#define NO_SERIAL
+		#define NO_REPEATER
+		#define NO_AUTO
+		#undef DEBUG
+		#define TINY_DEBUG
+		#define DEFAULT_CE_PIN 5
+		#define DEFAULT_CS_PIN 3
+	#endif
+#endif
+
 
 #endif

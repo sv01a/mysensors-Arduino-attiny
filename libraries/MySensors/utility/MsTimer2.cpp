@@ -30,7 +30,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
+#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega2560__) || defined (__AVR_ATmega32U4__)
 #include <MsTimer2.h>
 
 unsigned long MsTimer2::msecs;
@@ -204,3 +204,4 @@ ISR(TIMER2_OVF_vect) {
 	MsTimer2::_overflow();
 }
 
+#endif

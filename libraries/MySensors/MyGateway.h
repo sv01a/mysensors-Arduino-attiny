@@ -11,7 +11,7 @@
 
 #ifndef MyGateway_h
 #define MyGateway_h
-
+#ifndef TINY
 #include "MySensor.h"
 
 #define MAX_RECEIVE_LENGTH 100 // Max buffersize needed for messages coming from controller
@@ -68,5 +68,7 @@ class MyGateway : public MySensor
 
 void ledTimersInterrupt();
 void startInclusionInterrupt();
+
+#endif
 
 #endif

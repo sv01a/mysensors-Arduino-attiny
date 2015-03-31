@@ -24,6 +24,7 @@
 *						Arduino IDE release.
 * 1.00      Initial public release.
 *******************************************************************************/
+#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega2560__) || defined (__AVR_ATmega32U4__)
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 #include <avr/power.h>
@@ -854,3 +855,4 @@ ISR (WDT_vect)
 }
 
 LowPowerClass LowPower;
+#endif
