@@ -556,10 +556,12 @@ bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 #ifndef TINY
 		LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
 #else
+		cbi(ADCSRA,ADEN);   // switch Analog to Digitalconverter OFF
 		set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
 		sleep_enable();
 		sleep_mode();                        // System actually sleeps here
 		sleep_disable();                     // System continues execution here when watchdog timed out
+		sbi(ADCSRA,ADEN);     // switch Analog to Digitalconverter ON
 #endif
 	}
 #ifndef TINY
