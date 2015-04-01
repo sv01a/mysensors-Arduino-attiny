@@ -11,10 +11,21 @@
 
 #include "MySensor.h"
 #ifndef TINY
-#include "utility/LowPower.h"
+	#include "utility/LowPower.h"
+#else
+	#include <avr/sleep.h>
+	#include <avr/interrupt.h>
+	#ifndef cbi
+		#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+	#endif
+	#ifndef sbi
+		#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+	#endif
 #endif
 #include "utility/RF24.h"
 #include "utility/RF24_config.h"
+
+
 
 
 // Inline function and macros
@@ -515,8 +526,54 @@ void MySensor::wait(unsigned long ms) {
 	}
 }
 
-#ifndef TINY
 int8_t pinIntTrigger = 0;
+
+bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
+	// Let serial prints finish (debug, log etc)
+	bool pinTriggeredWakeup = true;
+#ifndef NO_SERIAL
+	Serial.flush();
+#endif
+	RF24::powerDown();
+#ifndef TINY
+	attachInterrupt(interrupt, wakeUp, mode);
+#else
+	sbi(GIMSK,PCIE); // Turn on Pin Change interrupt
+	sbi(PCMSK,PCINT4); // Which pins are affected by the interrupt
+#endif
+	if (ms>0) {
+		pinIntTrigger = 0;
+		sleep(ms);
+		if (0 == pinIntTrigger) {
+			pinTriggeredWakeup = false;
+		}
+	} else {
+#ifndef NO_SERIAL
+		Serial.flush();
+#endif
+#ifndef TINY
+		LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+#else
+		set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
+		sleep_enable();
+		sleep_mode();                        // System actually sleeps here
+		sleep_disable();                     // System continues execution here when watchdog timed out
+#endif
+	}
+#ifndef TINY
+	detachInterrupt(interrupt);
+#endif
+	return pinTriggeredWakeup;
+}
+
+
+ISR(PCINT4_vect) {
+	cbi(PCMSK,PCINT4); // Turn off PB4 as interrupt pin
+	pinIntTrigger = 1;
+}
+
+
+#ifndef TINY
 void wakeUp()	 //place to send the interrupts
 {
 	pinIntTrigger = 1;
@@ -547,28 +604,6 @@ void MySensor::sleep(unsigned long ms) {
 	RF24::powerDown();
 	pinIntTrigger = 0;
 	internalSleep(ms);
-}
-
-bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
-	// Let serial prints finish (debug, log etc)
-	bool pinTriggeredWakeup = true;
-#ifndef NO_SERIAL
-	Serial.flush();
-#endif
-	RF24::powerDown();
-	attachInterrupt(interrupt, wakeUp, mode);
-	if (ms>0) {
-		pinIntTrigger = 0;
-		sleep(ms);
-		if (0 == pinIntTrigger) {
-			pinTriggeredWakeup = false;
-		}
-	} else {
-		Serial.flush();
-		LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
-	}
-	detachInterrupt(interrupt);
-	return pinTriggeredWakeup;
 }
 
 int8_t MySensor::sleep(uint8_t interrupt1, uint8_t mode1, uint8_t interrupt2, uint8_t mode2, unsigned long ms) {
