@@ -543,7 +543,9 @@ bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 #endif
 	if (ms>0) {
 		pinIntTrigger = 0;
+#ifndef TINY
 		sleep(ms);
+#endif
 		if (0 == pinIntTrigger) {
 			pinTriggeredWakeup = false;
 		}
@@ -566,12 +568,12 @@ bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 	return pinTriggeredWakeup;
 }
 
-
+#ifdef TINY
 ISR(PCINT4_vect) {
 	cbi(PCMSK,PCINT4); // Turn off PB4 as interrupt pin
 	pinIntTrigger = 1;
 }
-
+#endif
 
 #ifndef TINY
 void wakeUp()	 //place to send the interrupts
