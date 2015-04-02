@@ -528,6 +528,15 @@ void MySensor::wait(unsigned long ms) {
 
 int8_t pinIntTrigger = 0;
 
+void wakeUp()	 //place to send the interrupts
+{
+	pinIntTrigger = 1;
+}
+void wakeUp2()	 //place to send the second interrupts
+{
+	pinIntTrigger = 2;
+}
+
 bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 	// Let serial prints finish (debug, log etc)
 	bool pinTriggeredWakeup = true;
@@ -561,6 +570,7 @@ bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 		sleep_enable();
 		sleep_mode();                        // System actually sleeps here
 		sleep_disable();                     // System continues execution here when watchdog timed out
+		pinIntTrigger = 1;
 		sbi(ADCSRA,ADEN);     // switch Analog to Digitalconverter ON
 #endif
 	}
@@ -573,20 +583,11 @@ bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 #ifdef TINY
 ISR(PCINT4_vect) {
 	cbi(PCMSK,PCINT4); // Turn off PB4 as interrupt pin
-	pinIntTrigger = 1;
 }
 #endif
 
-#ifndef TINY
-void wakeUp()	 //place to send the interrupts
-{
-	pinIntTrigger = 1;
-}
-void wakeUp2()	 //place to send the second interrupts
-{
-	pinIntTrigger = 2;
-}
 
+#ifndef TINY
 void MySensor::internalSleep(unsigned long ms) {
 	while (!pinIntTrigger && ms >= 8000) { LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); ms -= 8000; }
 	if (!pinIntTrigger && ms >= 4000)    { LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF); ms -= 4000; }
