@@ -1,13 +1,22 @@
-/*
- The MySensors library adds a new layer on top of the RF24 library.
- It handles radio network routing, relaying and ids.
-
- Created by Henrik Ekblad <henrik.ekblad@gmail.com>
-
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- version 2 as published by the Free Software Foundation.
+/**
+ * The MySensors Arduino library handles the wireless radio link and protocol
+ * between your home built sensors/actuators and HA controller of choice.
+ * The sensors forms a self healing radio network with optional repeaters. Each
+ * repeater and gateway builds a routing tables in EEPROM which keeps track of the
+ * network topology allowing messages to be routed to nodes.
+ *
+ * Created by Henrik Ekblad <henrik.ekblad@mysensors.org>
+ * Copyright (C) 2013-2015 Sensnology AB
+ * Full contributor list: https://github.com/mysensors/Arduino/graphs/contributors
+ *
+ * Documentation: http://www.mysensors.org
+ * Support Forum: http://forum.mysensors.org
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * version 2 as published by the Free Software Foundation.
  */
+
 
 #ifndef MyMessage_h
 #define MyMessage_h
@@ -32,19 +41,105 @@ typedef enum {
 	C_STREAM = 4 // For Firmware and other larger chunks of data that need to be divided into pieces.
 } mysensor_command;
 
+// Type of sensor (used when presenting sensors)
+typedef enum {
+	S_DOOR, // Door sensor, V_TRIPPED, V_ARMED
+	S_MOTION,  // Motion sensor, V_TRIPPED, V_ARMED 
+	S_SMOKE,  // Smoke sensor, V_TRIPPED, V_ARMED
+	S_LIGHT, // Binary light or relay, V_STATUS (or V_LIGHT), V_WATT
+	S_BINARY=3, // Binary light or relay, V_STATUS (or V_LIGHT), V_WATT (same as S_LIGHT)
+	S_DIMMER, // Dimmable light or fan device, V_STATUS (on/off), V_DIMMER (dimmer level 0-100), V_WATT
+	S_COVER, // Blinds or window cover, V_UP, V_DOWN, V_STOP, V_DIMMER (open/close to a percentage)
+	S_TEMP, // Temperature sensor, V_TEMP
+	S_HUM, // Humidity sensor, V_HUM
+	S_BARO, // Barometer sensor, V_PRESSURE, V_FORECAST
+	S_WIND, // Wind sensor, V_WIND, V_GUST
+	S_RAIN, // Rain sensor, V_RAIN, V_RAINRATE
+	S_UV, // Uv sensor, V_UV
+	S_WEIGHT, // Personal scale sensor, V_WEIGHT, V_IMPEDANCE
+	S_POWER, // Power meter, V_WATT, V_KWH
+	S_HEATER, // Header device, V_HVAC_SETPOINT_HEAT, V_HVAC_FLOW_STATE
+	S_DISTANCE, // Distance sensor, V_DISTANCE
+	S_LIGHT_LEVEL, // Light level sensor, V_LIGHT_LEVEL (uncalibrated in percentage),  V_LEVEL (light level in lux)
+	S_ARDUINO_NODE, // Used (internally) for presenting a non-repeating Arduino node
+	S_ARDUINO_REPEATER_NODE, // Used (internally) for presenting a repeating Arduino node 
+	S_LOCK, // Lock device, V_LOCK_STATUS
+	S_IR, // Ir device, V_IR_SEND, V_IR_RECEIVE
+	S_WATER, // Water meter, V_FLOW, V_VOLUME
+	S_AIR_QUALITY, // Air quality sensor, V_LEVEL
+	S_CUSTOM, // Custom sensor 
+	S_DUST, // Dust sensor, V_LEVEL
+	S_SCENE_CONTROLLER, // Scene controller device, V_SCENE_ON, V_SCENE_OFF. 
+	S_RGB_LIGHT, // RGB light. Send color component data using V_RGB. Also supports V_WATT 
+	S_RGBW_LIGHT, // RGB light with an additional White component. Send data using V_RGBW. Also supports V_WATT
+	S_COLOR_SENSOR,  // Color sensor, send color information using V_RGB
+	S_HVAC, // Thermostat/HVAC device. V_HVAC_SETPOINT_HEAT, V_HVAC_SETPOINT_COLD, V_HVAC_FLOW_STATE, V_HVAC_FLOW_MODE
+	S_MULTIMETER, // Multimeter device, V_VOLTAGE, V_CURRENT, V_IMPEDANCE 
+	S_SPRINKLER,  // Sprinkler, V_STATUS (turn on/off), V_TRIPPED (if fire detecting device)
+	S_WATER_LEAK, // Water leak sensor, V_TRIPPED, V_ARMED
+	S_SOUND, // Sound sensor, V_TRIPPED, V_ARMED, V_LEVEL (sound level in dB)
+	S_VIBRATION, // Vibration sensor, V_TRIPPED, V_ARMED, V_LEVEL (vibration in Hz)
+	S_MOISTURE, // Moisture sensor, V_TRIPPED, V_ARMED, V_LEVEL (water content or moisture in percentage?) 
+} mysensor_sensor;
+
 // Type of sensor data (for set/req/ack messages)
 typedef enum {
-	V_TEMP,V_HUM, V_LIGHT, V_DIMMER, V_PRESSURE, V_FORECAST, V_RAIN,
-	V_RAINRATE, V_WIND, V_GUST, V_DIRECTION, V_UV, V_WEIGHT, V_DISTANCE,
-	V_IMPEDANCE, V_ARMED, V_TRIPPED, V_WATT, V_KWH, V_SCENE_ON, V_SCENE_OFF,
-	V_HEATER, V_HEATER_SW, V_LIGHT_LEVEL, V_VAR1, V_VAR2, V_VAR3, V_VAR4, V_VAR5,
-	V_UP, V_DOWN, V_STOP, V_IR_SEND, V_IR_RECEIVE, V_FLOW, V_VOLUME, V_LOCK_STATUS,
-	V_DUST_LEVEL, V_VOLTAGE, V_CURRENT, 
-	V_RGB, 	// Used for sending/receiving color information. Sent as ascii hex. RRGGBB (RR=red, GG=green, BB=blue component)
-	V_RGBW, // Used for sending/receiving color information. Sent as ascii hex. RRGGBBWW (WW=while component)
-	V_ID,    // Can be used for reporting ids for sensors such as DS1820b. 
-	V_LIGHT_LEVEL_LUX  // Light level in lux
+	V_TEMP, // S_TEMP
+	V_HUM, // S_HUM
+	V_STATUS, //  S_LIGHT, S_DIMMER, S_SPRINKLER, S_HVAC, S_HEATER. Used for setting binary (on/off) status. 1=on, 0=off  
+	V_LIGHT=2, // Same as V_STATUS
+	V_PERCENTAGE, // S_DIMMER. Used for sending a percentage value (0-100). 
+	V_DIMMER=3, // S_DIMMER. Same as V_PERCENTAGE.  
+	V_PRESSURE, // S_BARO
+	V_FORECAST, // S_BARO
+	V_RAIN, // S_RAIN
+	V_RAINRATE, // S_RAIN
+	V_WIND, // S_WIND
+	V_GUST,  // S_WIND
+	V_DIRECTION, // S_WIND 
+	V_UV, // S_UV
+	V_WEIGHT, // S_WEIGHT
+	V_DISTANCE, // S_DISTANCE
+	V_IMPEDANCE, // S_MULTIMETER, S_WEIGHT
+	V_ARMED, // S_DOOR, S_MOTION, S_SMOKE, S_SPRINKLER
+	V_TRIPPED, // S_DOOR, S_MOTION, S_SMOKE, S_SPRINKLER (for sprinklers with fire detection)
+	V_WATT, // S_POWER, S_LIGHT, S_DIMMER
+	V_KWH, // S_POWER
+	V_SCENE_ON, // S_SCENE_CONTROLLER
+	V_SCENE_OFF, // S_SCENE_CONTROLLER
+	V_HEATER, // Deprecated. Use V_HVAC_FLOW_STATE instead.
+	V_HVAC_FLOW_STATE=21,  // HVAC flow state ("Off", "HeatOn", "CoolOn", or "AutoChangeOver"). S_HEATER, S_HVAC 
+	V_HVAC_SPEED, // HVAC/Heater fan speed ("Min", "Normal", "Max", "Auto") 
+	V_LIGHT_LEVEL, // Used for sending light level in uncalibrated percentage. See also V_LEVEL (light level in lux). S_LIGHT_LEVEL
+	V_VAR1, V_VAR2, V_VAR3, V_VAR4, V_VAR5,
+	V_UP, // S_COVER
+	V_DOWN, // S_COVER
+	V_STOP, // S_COVER
+	V_IR_SEND, // S_IR
+	V_IR_RECEIVE, // S_IR
+	V_FLOW, // S_WATER
+	V_VOLUME, // S_WATER
+	V_LOCK_STATUS, // S_LOCK
+	V_LEVEL, // S_DUST, S_AIR_QUALITY, S_SOUND (dB), S_VIBRATION (hz), S_LIGHT_LEVEL (lux)
+	V_VOLTAGE, // S_MULTIMETER 
+	V_CURRENT, // S_MULTIMETER
+	V_RGB, 	// S_RGB_LIGHT, S_COLOR_SENSOR. 
+					// Used for sending color information for multi color LED lighting or color sensors. 
+					// Sent as ASCII hex: RRGGBB (RR=red, GG=green, BB=blue component)
+	V_RGBW, // S_RGBW_LIGHT
+					// Used for sending color information to multi color LED lighting. 
+					// Sent as ASCII hex: RRGGBBWW (WW=while component)
+	V_ID,   // S_TEMP
+					// Used for sending in sensors hardware ids (i.e. OneWire DS1820b). 
+	V_UNIT_PREFIX, // Allows sensors to send in a string representing the 
+								 // unit prefix to be displayed in GUI, not parsed by controller! E.g. cm, m, km, inch.
+								 // Can be used for S_DISTANCE or gas concentration (S_DUST, S_AIR_QUALITY)
+	V_HVAC_SETPOINT_COOL, // HVAC cool setpoint (Integer between 0-100). S_HVAC
+	V_HVAC_SETPOINT_HEAT, // HVAC/Heater setpoint (Integer between 0-100). S_HEATER, S_HVAC
+	V_HVAC_FLOW_MODE, // Flow mode for HVAC ("Auto", "ContinuousOn", "PeriodicOn"). S_HVAC
+	
 } mysensor_data;
+
 
 // Type of internal messages (for internal messages)
 typedef enum {
@@ -54,13 +149,6 @@ typedef enum {
 	I_REBOOT, I_GATEWAY_READY, I_REQUEST_SIGNING, I_GET_NONCE, I_GET_NONCE_RESPONSE
 } mysensor_internal;
 
-// Type of sensor  (for presentation message)
-typedef enum {
-	S_DOOR, S_MOTION, S_SMOKE, S_LIGHT, S_DIMMER, S_COVER, S_TEMP, S_HUM, S_BARO, S_WIND,
-	S_RAIN, S_UV, S_WEIGHT, S_POWER, S_HEATER, S_DISTANCE, S_LIGHT_LEVEL, S_ARDUINO_NODE,
-	S_ARDUINO_REPEATER_NODE, S_LOCK, S_IR, S_WATER, S_AIR_QUALITY, S_CUSTOM, S_DUST,
-	S_SCENE_CONTROLLER,S_COLOR, S_MULTIMETER
-} mysensor_sensor;
 
 // Type of data stream  (for streamed message)
 typedef enum {

@@ -1,3 +1,23 @@
+/**
+ * The MySensors Arduino library handles the wireless radio link and protocol
+ * between your home built sensors/actuators and HA controller of choice.
+ * The sensors forms a self healing radio network with optional repeaters. Each
+ * repeater and gateway builds a routing tables in EEPROM which keeps track of the
+ * network topology allowing messages to be routed to nodes.
+ *
+ * Created by Henrik Ekblad <henrik.ekblad@mysensors.org>
+ * Copyright (C) 2013-2015 Sensnology AB
+ * Full contributor list: https://github.com/mysensors/Arduino/graphs/contributors
+ *
+ * Documentation: http://www.mysensors.org
+ * Support Forum: http://forum.mysensors.org
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * version 2 as published by the Free Software Foundation.
+ */
+
+
 #ifndef MyConfig_h
 #define MyConfig_h
 #include <stdint.h>
@@ -23,6 +43,26 @@
 #define MY_OTA_FLASH_SS 8
 // Flash jdecid
 #define MY_OTA_FLASH_JDECID 0x1F65
+
+
+/**********************************
+*  Information LEDs blinking
+***********************************/
+// This feature enables LEDs blinking on message receive, transmit
+// or if some error occured. This was commonly used only in gateways,
+// but now can be used in any sensor node. Also the LEDs can now be
+// disabled in the gateway.
+
+// #define WITH_LEDS_BLINKING
+
+// default LEDs blinking period in milliseconds
+#define DEFAULT_LED_BLINK_PERIOD 300
+// The RX LED default pin
+#define DEFAULT_RX_LED_PIN 6
+// The TX LED default pin
+#define DEFAULT_TX_LED_PIN 5
+// The Error LED default pin
+#define DEFAULT_ERR_LED_PIN 4
 
 
 /**********************************
@@ -65,11 +105,14 @@
 #define RF24_CS_PIN		   10
 #define RF24_PA_LEVEL 	   RF24_PA_MAX
 #define RF24_PA_LEVEL_GW   RF24_PA_LOW
-#define RF24_CHANNEL	   76             //RF channel for the sensor net, 0-127
-#define RF24_DATARATE 	   RF24_250KBPS   //RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
-#define RF24_BASE_RADIO_ID ((uint64_t)0xA8A8E1FC00LL) // This is also act as base value for sensor nodeId addresses. Change this (or channel) if you have more than one sensor network.
+// RF channel for the sensor net, 0-127
+#define RF24_CHANNEL	   76
+//RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps
+#define RF24_DATARATE 	   RF24_250KBPS
+// This is also act as base value for sensor nodeId addresses. Change this (or channel) if you have more than one sensor network.
+#define RF24_BASE_RADIO_ID ((uint64_t)0xA8A8E1FC00LL)
 
-// Enable SOFTSPI for the W5100 Ethernet module
+// Enable SOFTSPI for NRF24L01 when using the W5100 Ethernet module
 //#define SOFTSPI
 #ifdef SOFTSPI
 	// Define the soft SPI pins used for NRF radio
@@ -77,6 +120,24 @@
     const uint8_t SOFT_SPI_MOSI_PIN = 15;
     const uint8_t SOFT_SPI_SCK_PIN = 14;
 #endif
+
+
+/**********************************
+*  RFM69 Driver Defaults
+***********************************/
+// Default network id. Use the same for all nodes that will talk to each other
+#define RFM69_NETWORKID     100
+
+// Default frequency to use. This must match the hardware version of the RFM69 radio (uncomment one):
+// #define RFM69_FREQUENCY   RF69_433MHZ
+#define RFM69_FREQUENCY   RF69_868MHZ
+//#define FREQUENCY     RF69_915MHZ
+
+// Enable this for encryption of packets
+//#define RFM69_ENABLE_ENCRYPTION
+#define RFM69_ENCRYPTKEY    "sampleEncryptKey" //exactly the same 16 characters/bytes on all nodes!
+
+
 
 
 #endif
