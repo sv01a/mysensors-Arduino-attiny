@@ -13,7 +13,7 @@
 #ifndef TINY
 	#include "utility/LowPower.h"
 #else
-	#include <avr/sleep.h>
+	#include <tinysnore.h>
 	#include <avr/interrupt.h>
 	#ifndef cbi
 		#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -552,9 +552,7 @@ bool MySensor::sleep(uint8_t interrupt, uint8_t mode, unsigned long ms) {
 #endif
 	if (ms>0) {
 		pinIntTrigger = 0;
-#ifndef TINY
 		sleep(ms);
-#endif
 		if (0 == pinIntTrigger) {
 			pinTriggeredWakeup = false;
 		}
@@ -587,8 +585,8 @@ ISR(PCINT4_vect) {
 #endif
 
 
-#ifndef TINY
 void MySensor::internalSleep(unsigned long ms) {
+#ifndef TINY
 	while (!pinIntTrigger && ms >= 8000) { LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); ms -= 8000; }
 	if (!pinIntTrigger && ms >= 4000)    { LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF); ms -= 4000; }
 	if (!pinIntTrigger && ms >= 2000)    { LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF); ms -= 2000; }
@@ -599,6 +597,9 @@ void MySensor::internalSleep(unsigned long ms) {
 	if (!pinIntTrigger && ms >= 64)      { LowPower.powerDown(SLEEP_60MS, ADC_OFF, BOD_OFF); ms -= 60; }
 	if (!pinIntTrigger && ms >= 32)      { LowPower.powerDown(SLEEP_30MS, ADC_OFF, BOD_OFF); ms -= 30; }
 	if (!pinIntTrigger && ms >= 16)      { LowPower.powerDown(SLEEP_15Ms, ADC_OFF, BOD_OFF); ms -= 15; }
+#else
+	snore(ms);
+#endif
 }
 
 void MySensor::sleep(unsigned long ms) {
@@ -611,9 +612,12 @@ void MySensor::sleep(unsigned long ms) {
 	internalSleep(ms);
 }
 
+#ifndef TINY
 int8_t MySensor::sleep(uint8_t interrupt1, uint8_t mode1, uint8_t interrupt2, uint8_t mode2, unsigned long ms) {
 	int8_t retVal = 1;
+	#ifndef NO_SERIAL
 	Serial.flush(); // Let serial prints finish (debug, log etc)
+	#endif
 	RF24::powerDown();
 	attachInterrupt(interrupt1, wakeUp, mode1);
 	attachInterrupt(interrupt2, wakeUp2, mode2);

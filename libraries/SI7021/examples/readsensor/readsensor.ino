@@ -1,4 +1,4 @@
-#include <Wire.h>
+#include <TinyWireM.h>
 #include <SI7021.h>
 
 
@@ -45,7 +45,7 @@ void loop() {
     sensor.setHeater(false);
     
     // see if heater changed temperature
-    int temperature = sensor.getCelsiusHundredths();
+    temperature = sensor.getCelsiusHundredths();
     temperature = temperature / 100;
     for (int i = 0; i < temperature; i++) {
         pulse(led2); 
@@ -76,5 +76,3 @@ void pulse(int pin) {
    digitalWrite(pin,LOW);
    delay(300);
 }
-
-
